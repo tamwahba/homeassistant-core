@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-
 from quantum_gateway import QuantumGatewayScanner
 from requests.exceptions import RequestException
 import voluptuous as vol
@@ -18,9 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-_LOGGER = logging.getLogger(__name__)
-
-DEFAULT_HOST = "myfiosgateway.com"
+from .const import _LOGGER, DEFAULT_HOST
 
 PLATFORM_SCHEMA = DEVICE_TRACKER_PLATFORM_SCHEMA.extend(
     {
