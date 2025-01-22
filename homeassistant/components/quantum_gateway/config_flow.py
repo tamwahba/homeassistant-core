@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from requests.exceptions import ConnectionError, Timeout
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -19,13 +20,15 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.device_registry import format_mac
 
 from .const import (
+    _LOGGER,
     CONF_LEGACY_DEVICES_BY_MAC,
     DEFAULT_HOST,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
+from .coordinator import get_scanner
 
-CONFIG_SCHEMA = vol.Schema(
+STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(
             CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL.total_seconds()
@@ -48,21 +51,44 @@ class QuantumGatewayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None) -> ConfigFlowResult:
         """Handle a flow initiated by the user."""
-        if user_input is None:
-            return self.async_show_form(step_id="user", data_schema=CONFIG_SCHEMA)
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            try:
+                scanner = get_scanner(
+                    user_input[CONF_HOST],
+                    user_input[CONF_PASSWORD],
+                    user_input[CONF_SSL],
+                )
+            except (ConnectionError, Timeout):
+                errors["base"] = "cannot_connect"
+            except Exception as err:  # noqa: BLE001
+                _LOGGER.exception("Unexpected exception: %s", err)
+                errors["base"] = "unknown"
+            else:
+                if not scanner.success_init:
+                    errors["base"] = "invalid_auth"
+                else:
+                    return self.async_create_entry(
+                        title=user_input[CONF_HOST], data=user_input
+                    )
 
-        return self.async_create_entry(title=user_input[CONF_HOST], data=user_input)
+        return self.async_show_form(
+            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+        )
 
     async def async_step_import(self, import_data: dict[str, Any]) -> ConfigFlowResult:
         """Import Quantum Gateway config entry from configuration.yaml."""
         try:
-            import_data = CONFIG_SCHEMA(import_data)
+            import_data = STEP_USER_DATA_SCHEMA(import_data)
         except vol.MultipleInvalid as err:
             return self.async_show_form(
                 step_id="import",
-                data_schema=CONFIG_SCHEMA,
+                data_schema=STEP_USER_DATA_SCHEMA,
                 errors={
-                    "base": f"failed to import from yaml: {[e.error_message for e in err.errors]}"
+                    "base": "invalid_yaml",
+                },
+                description_placeholders={
+                    "errors": ", ".join(err.error_message for err in err.errors)
                 },
             )
 
