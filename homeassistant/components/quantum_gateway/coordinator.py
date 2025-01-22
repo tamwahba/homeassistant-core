@@ -1,13 +1,13 @@
 """Coordinator for the Quantum Gateway integration."""
 
 from datetime import timedelta
-from typing import override
+from types import MappingProxyType
+from typing import Any, override
 
 from quantum_gateway import QuantumGatewayScanner
 
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_SCAN_INTERVAL, CONF_SSL
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import _LOGGER
@@ -21,7 +21,9 @@ def get_scanner(host: str, password: str, use_https: bool) -> QuantumGatewayScan
 class QuantumGatewayCoordinator(DataUpdateCoordinator[dict[str, str]]):
     """Class to manage fetching data from the Quantum Gateway router."""
 
-    def __init__(self, hass: HomeAssistant, options: ConfigType) -> None:
+    def __init__(
+        self, hass: HomeAssistant, options: MappingProxyType[str, Any]
+    ) -> None:
         """Initialize the data coordinator."""
         update_interval = options.get(CONF_SCAN_INTERVAL)
         if update_interval is not None:
