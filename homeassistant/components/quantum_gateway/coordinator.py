@@ -27,7 +27,7 @@ class QuantumGatewayCoordinator(DataUpdateCoordinator[dict[str, str]]):
         """Initialize the data coordinator."""
         update_interval = options.get(CONF_SCAN_INTERVAL)
         if update_interval is not None:
-            update_interval = timedelta(update_interval)
+            update_interval = timedelta(seconds=update_interval)
         super().__init__(
             hass,
             _LOGGER,

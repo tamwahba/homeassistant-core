@@ -1,6 +1,5 @@
 """Test the Quantum Gateway config flow."""
 
-from dataclasses import dataclass
 from unittest.mock import AsyncMock, patch
 
 from requests.exceptions import ConnectionError, Timeout
@@ -15,12 +14,7 @@ from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_SCAN_INTERVAL, CO
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-
-@dataclass
-class MockScanner:
-    """Mock data class for simulating QuantumGatewayScanner."""
-
-    success_init: bool
+from .util import MockScanner
 
 
 async def ensure_error_recovered(
